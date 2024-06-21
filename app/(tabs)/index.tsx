@@ -8,6 +8,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -15,6 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useForm, Controller } from "react-hook-form";
 import { useState } from "react";
 import { ToDo, useToDoContext } from "@/contexts/ToDoContext";
+import { Swipeable } from "react-native-gesture-handler";
 
 export default function HomeScreen() {
   const {
@@ -28,7 +30,8 @@ export default function HomeScreen() {
     },
   });
 
-  const { todos, addTodo, removeTodo, reactivateTodo } = useToDoContext();
+  const { todos, addTodo, removeTodo, reactivateTodo, archiveTodo } =
+    useToDoContext();
 
   const onSubmit = (data: { toDo: string }) => {
     addTodo(data.toDo);
@@ -72,6 +75,9 @@ export default function HomeScreen() {
               }
               reactivateTodo(item.id);
             }}
+            onPressArchive={() => {
+              archiveTodo(item.id);
+            }}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -86,19 +92,45 @@ export default function HomeScreen() {
 type ItemProps = {
   item: ToDo;
   onPress: () => void;
+  onPressArchive: () => void;
 };
 
-const ListItem = ({ item, onPress }: ItemProps) => (
-  <TouchableOpacity
-    onPress={onPress}
-    style={{
-      width: 200,
-      height: 30,
-      backgroundColor: item.deleted ? "grey" : "red",
+const ListItem = ({ item, onPress, onPressArchive }: ItemProps) => (
+  <Swipeable
+    renderRightActions={(progress, dragAnimatedValue) => {
+      const opacity = dragAnimatedValue.interpolate({
+        inputRange: [-150, 0],
+        outputRange: [1, 0],
+        extrapolate: "clamp",
+      });
+      return (
+        <View style={styles.swipedRow}>
+          <View style={styles.swipedConfirmationContainer}>
+            <Text style={styles.deleteConfirmationText}>Archive? 🗂️</Text>
+          </View>
+          <Animated.View style={[styles.deleteButton, { opacity }]}>
+            <TouchableOpacity onPress={onPressArchive}>
+              <Text style={styles.deleteButtonText}>Archive</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      );
     }}
   >
-    <Text>{item.toDo}</Text>
-  </TouchableOpacity>
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        width: 300,
+        height: 40,
+        flex: 1,
+        backgroundColor: item.deleted ? "grey" : "red",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <Text>{item.toDo}</Text>
+    </TouchableOpacity>
+  </Swipeable>
 );
 
 const styles = StyleSheet.create({
@@ -108,15 +140,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  swipedRow: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "center",
+    paddingLeft: 5,
+    backgroundColor: "#818181",
+    minHeight: 40,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  swipedConfirmationContainer: {
+    flex: 1,
+  },
+  deleteConfirmationText: {
+    color: "#fcfcfc",
+    fontWeight: "bold",
+  },
+  deleteButton: {
+    backgroundColor: "blue",
+    flexDirection: "column",
+    justifyContent: "center",
+    height: "100%",
+  },
+  deleteButtonText: {
+    color: "#fcfcfc",
+    fontWeight: "bold",
+    padding: 3,
   },
 });

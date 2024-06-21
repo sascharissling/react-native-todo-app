@@ -30,9 +30,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="deleted"
         options={{
-          title: "Past Todos",
+          title: "Archive",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={"hammer"} color={color} />
+            <TabBarIcon name={"folder"} color={color} />
           ),
         }}
       />
